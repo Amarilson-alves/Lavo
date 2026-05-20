@@ -13,7 +13,10 @@
     "db:types": "pnpm --filter @lavo/database generate"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["unrs-resolver", "esbuild", "sharp"]
+    "onlyBuiltDependencies": ["unrs-resolver", "esbuild", "sharp"],
+    "overrides": {
+      "react-native-worklets": "npm:react-native-worklets-core@^1.3.0"
+    }
   },
   "devDependencies": {
     "turbo": "^2.0.0",

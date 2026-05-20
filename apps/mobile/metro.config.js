@@ -14,6 +14,13 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ]
 
+// Exclui pastas que não pertencem ao app mobile (evita crash ao iniciar Next.js em paralelo)
+config.resolver.blockList = [
+  /apps\/web\/.next\/.*/,
+  /apps\/web\/node_modules\/.*/,
+  /\.next\/.*/,
+]
+
 // Corrige URLs com backslash (%5C) geradas pelo Metro no Windows
 const originalEnhance = config.server?.enhanceMiddleware
 config.server = {
