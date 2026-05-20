@@ -1,0 +1,25 @@
+{
+  "name": "lavo",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "mobile": "pnpm --filter @lavo/mobile start",
+    "web": "pnpm --filter @lavo/web dev",
+    "db:types": "pnpm --filter @lavo/database generate"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["unrs-resolver", "esbuild", "sharp"]
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0"
+  }
+}
