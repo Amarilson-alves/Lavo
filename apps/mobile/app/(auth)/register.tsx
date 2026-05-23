@@ -1,8 +1,15 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { ArrowLeft } from 'lucide-react-native'
 import { useAuth } from '@/hooks/useAuth'
+
+const field = {
+  borderWidth: 1.5, borderColor: '#E5E7EB',
+  borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14,
+  fontSize: 15, color: '#111827', backgroundColor: '#FAFAFA',
+} as const
 
 export default function RegisterScreen() {
   const { role = 'client' } = useLocalSearchParams<{ role?: string }>()
@@ -29,7 +36,6 @@ export default function RegisterScreen() {
       Alert.alert('Atenção', 'Informe o nome do seu estabelecimento.')
       return
     }
-
     setLoading(true)
     const { error } = await signUp(email, password, fullName, {
       role,
@@ -37,12 +43,10 @@ export default function RegisterScreen() {
       business_name: isPartner ? businessName : undefined,
     })
     setLoading(false)
-
     if (error) {
       Alert.alert('Erro ao criar conta', error.message)
       return
     }
-
     Alert.alert(
       'Conta criada!',
       'Verifique seu e-mail para confirmar o cadastro.',
@@ -51,121 +55,135 @@ export default function RegisterScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-          <View className="flex-1 px-8 pt-8 pb-12">
-            <TouchableOpacity onPress={() => router.back()} className="mb-8">
-              <Text className="text-primary-500 text-base">← Voltar</Text>
-            </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0369A1' }}>
+      <StatusBar barStyle="light-content" backgroundColor="#0369A1" />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
 
-            <Text className="text-3xl font-bold text-gray-900 mb-2">
-              {isPartner ? 'Cadastre seu negócio' : 'Criar conta'}
-            </Text>
-            <Text className="text-gray-500 mb-8">
-              {isPartner
-                ? 'Comece a receber agendamentos hoje mesmo.'
-                : 'Encontre o melhor lava car perto de você.'}
-            </Text>
+        {/* Header */}
+        <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 28 }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              width: 40, height: 40, borderRadius: 20,
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              alignItems: 'center', justifyContent: 'center', marginBottom: 24,
+            }}
+          >
+            <ArrowLeft size={20} color="white" />
+          </TouchableOpacity>
 
-            {/* Tipo de conta */}
-            <View className="flex-row bg-gray-100 rounded-2xl p-1 mb-6">
+          <Text style={{ color: 'white', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>
+            {isPartner ? 'Cadastre seu negócio' : 'Criar conta'}
+          </Text>
+          <Text style={{ color: 'rgba(186,230,253,0.8)', fontSize: 14, marginTop: 6 }}>
+            {isPartner
+              ? 'Comece a receber agendamentos hoje mesmo.'
+              : 'Encontre o melhor lava car perto de você.'}
+          </Text>
+        </View>
+
+        {/* Card branco */}
+        <ScrollView
+          style={{ flex: 1, backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32 }}
+          contentContainerStyle={{ padding: 24, paddingBottom: 48 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Tipo de conta */}
+          <View style={{
+            flexDirection: 'row', backgroundColor: '#F3F4F6',
+            borderRadius: 16, padding: 4, marginBottom: 24,
+          }}>
+            {[
+              { key: 'client', label: 'Sou cliente' },
+              { key: 'partner', label: 'Sou parceiro' },
+            ].map(opt => (
               <TouchableOpacity
-                onPress={() => router.setParams({ role: 'client' })}
-                className={`flex-1 py-2.5 rounded-xl items-center ${!isPartner ? 'bg-white shadow-sm' : ''}`}
+                key={opt.key}
+                onPress={() => router.setParams({ role: opt.key })}
+                style={{
+                  flex: 1, paddingVertical: 11, borderRadius: 12, alignItems: 'center',
+                  backgroundColor: role === opt.key ? 'white' : 'transparent',
+                  shadowColor: role === opt.key ? '#000' : 'transparent',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 4,
+                  elevation: role === opt.key ? 2 : 0,
+                }}
               >
-                <Text className={`font-semibold text-sm ${!isPartner ? 'text-primary-600' : 'text-gray-500'}`}>
-                  Sou cliente
+                <Text style={{
+                  fontSize: 13, fontWeight: '600',
+                  color: role === opt.key ? '#0369A1' : '#9CA3AF',
+                }}>
+                  {opt.label}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => router.setParams({ role: 'partner' })}
-                className={`flex-1 py-2.5 rounded-xl items-center ${isPartner ? 'bg-white shadow-sm' : ''}`}
-              >
-                <Text className={`font-semibold text-sm ${isPartner ? 'text-primary-600' : 'text-gray-500'}`}>
-                  Sou parceiro
+            ))}
+          </View>
+
+          <View style={{ gap: 16 }}>
+            {isPartner && (
+              <View>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                  Nome do estabelecimento
                 </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="gap-4">
-              {isPartner && (
-                <View>
-                  <Text className="text-sm font-medium text-gray-700 mb-2">Nome do estabelecimento</Text>
-                  <TextInput
-                    className="border border-gray-300 rounded-xl px-4 py-3.5 text-base text-gray-900"
-                    placeholder="Ex: Auto Spa Premium"
-                    value={businessName}
-                    onChangeText={setBusinessName}
-                  />
-                </View>
-              )}
-
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2">
-                  {isPartner ? 'Seu nome completo' : 'Nome completo'}
-                </Text>
-                <TextInput
-                  className="border border-gray-300 rounded-xl px-4 py-3.5 text-base text-gray-900"
-                  placeholder="João Silva"
-                  autoCapitalize="words"
-                  value={fullName}
-                  onChangeText={setFullName}
-                />
+                <TextInput style={field} placeholder="Ex: Auto Spa Premium" placeholderTextColor="#9CA3AF"
+                  value={businessName} onChangeText={setBusinessName} />
               </View>
+            )}
 
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2">E-mail</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-xl px-4 py-3.5 text-base text-gray-900"
-                  placeholder="seu@email.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
-
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2">WhatsApp</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-xl px-4 py-3.5 text-base text-gray-900"
-                  placeholder="(11) 99999-9999"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                />
-              </View>
-
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-2">Senha</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-xl px-4 py-3.5 text-base text-gray-900"
-                  placeholder="Mínimo 6 caracteres"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                />
-              </View>
-            </View>
-
-            <TouchableOpacity
-              className="bg-primary-500 rounded-2xl py-4 items-center mt-8"
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              <Text className="text-white font-bold text-base">
-                {loading ? 'Criando conta...' : 'Criar conta'}
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                {isPartner ? 'Seu nome completo' : 'Nome completo'}
               </Text>
-            </TouchableOpacity>
-
-            <View className="flex-row justify-center mt-6">
-              <Text className="text-gray-500">Já tem conta? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-                <Text className="text-primary-500 font-semibold">Entrar</Text>
-              </TouchableOpacity>
+              <TextInput style={field} placeholder="João Silva" placeholderTextColor="#9CA3AF"
+                autoCapitalize="words" value={fullName} onChangeText={setFullName} />
             </View>
+
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>E-mail</Text>
+              <TextInput style={field} placeholder="seu@email.com" placeholderTextColor="#9CA3AF"
+                keyboardType="email-address" autoCapitalize="none" autoComplete="email"
+                value={email} onChangeText={setEmail} />
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>WhatsApp</Text>
+              <TextInput style={field} placeholder="(11) 99999-9999" placeholderTextColor="#9CA3AF"
+                keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                Senha <Text style={{ color: '#9CA3AF', fontWeight: '400' }}>(mín. 6 caracteres)</Text>
+              </Text>
+              <TextInput style={field} placeholder="••••••••" placeholderTextColor="#9CA3AF"
+                secureTextEntry value={password} onChangeText={setPassword} />
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: loading ? '#7DD3FC' : '#0EA5E9',
+              borderRadius: 18, paddingVertical: 18,
+              alignItems: 'center', marginTop: 28,
+              shadowColor: '#0EA5E9', shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.3, shadowRadius: 16, elevation: 6,
+            }}
+            onPress={handleRegister}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            <Text style={{ color: 'white', fontSize: 16, fontWeight: '700' }}>
+              {loading ? 'Criando conta...' : 'Criar conta'}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
+            <Text style={{ color: '#6B7280', fontSize: 14 }}>Já tem conta? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+              <Text style={{ color: '#0EA5E9', fontWeight: '700', fontSize: 14 }}>Entrar</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

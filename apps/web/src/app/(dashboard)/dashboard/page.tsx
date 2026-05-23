@@ -26,6 +26,36 @@ export default function DashboardPage() {
   const { data: partner } = usePartnerProfile()
   const { data: stats, isLoading } = usePartnerStats(partner?.id)
 
+  const profileLoading = !partner && isLoading
+
+  if (profileLoading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary-500" size={32} />
+      </div>
+    )
+  }
+
+  if (!partner) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mb-6">
+          <CalendarCheck size={36} className="text-primary-400" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Configure seu negócio</h2>
+        <p className="text-gray-500 max-w-sm mb-6">
+          Seu perfil de parceiro ainda não foi configurado. Acesse as configurações para começar.
+        </p>
+        <a
+          href="/dashboard/settings"
+          className="bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl hover:bg-primary-600 transition-colors"
+        >
+          Configurar agora
+        </a>
+      </div>
+    )
+  }
+
   if (isLoading || !stats) {
     return (
       <div className="p-8 flex items-center justify-center">

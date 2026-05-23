@@ -1,12 +1,17 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, StatusBar } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import {
   User, Car, Bell, Shield, HelpCircle, LogOut,
-  ChevronRight, Star, Calendar, Settings,
+  ChevronRight, Star, Calendar, Settings, Sparkles,
 } from 'lucide-react-native'
+
+const CARD_SHADOW = {
+  shadowColor: '#1C1C1E', shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.07, shadowRadius: 12, elevation: 3,
+}
 
 export default function ProfileScreen() {
   const { session, signOut } = useAuth()
@@ -14,10 +19,11 @@ export default function ProfileScreen() {
 
   const userName = profile?.full_name ?? session?.user?.user_metadata?.full_name ?? 'Usuário'
   const userEmail = profile?.email ?? session?.user?.email ?? ''
-  const initial = userName.charAt(0).toUpperCase()
+  const firstName = userName.split(' ')[0]
+  const initial = firstName.charAt(0).toUpperCase()
 
   async function handleSignOut() {
-    Alert.alert('Sair', 'Deseja sair da sua conta?', [
+    Alert.alert('Sair da conta', 'Deseja mesmo sair?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Sair', style: 'destructive',
@@ -31,115 +37,181 @@ export default function ProfileScreen() {
 
   const MENU_SECTIONS = [
     {
-      title: 'Conta',
+      title: 'Minha conta',
       items: [
-        { icon: User, label: 'Dados pessoais', desc: 'Nome, e-mail, telefone', onPress: () => {} },
-        { icon: Car, label: 'Meus veículos', desc: profile ? `${stats?.totalBookings ?? 0} uso(s) registrado(s)` : 'Carrregando...', onPress: () => router.push('/(client)/vehicles') },
-        { icon: Bell, label: 'Notificações', desc: 'Alertas e lembretes', onPress: () => {} },
+        { icon: User, label: 'Dados pessoais', desc: 'Nome, e-mail, telefone', color: '#0EA5E9', bg: '#EFF6FF', onPress: () => {} },
+        { icon: Car, label: 'Meus veículos', desc: 'Gerenciar veículos cadastrados', color: '#8B5CF6', bg: '#F5F3FF', onPress: () => router.push('/(client)/vehicles') },
+        { icon: Bell, label: 'Notificações', desc: 'Alertas e lembretes', color: '#F59E0B', bg: '#FFFBEB', onPress: () => {} },
       ],
     },
     {
       title: 'Suporte',
       items: [
-        { icon: HelpCircle, label: 'Central de ajuda', desc: 'Dúvidas e tutoriais', onPress: () => {} },
-        { icon: Shield, label: 'Privacidade', desc: 'Termos e política de dados', onPress: () => {} },
-        { icon: Settings, label: 'Configurações', desc: 'Preferências do app', onPress: () => {} },
+        { icon: HelpCircle, label: 'Central de ajuda', desc: 'Dúvidas e tutoriais', color: '#10B981', bg: '#F0FDF4', onPress: () => {} },
+        { icon: Shield, label: 'Privacidade', desc: 'Termos e política de dados', color: '#6B7280', bg: '#F3F4F6', onPress: () => {} },
+        { icon: Settings, label: 'Configurações', desc: 'Preferências do app', color: '#6B7280', bg: '#F3F4F6', onPress: () => {} },
       ],
     },
   ]
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFD' }} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0369A1" />
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className="bg-white px-5 pt-6 pb-6">
-          <Text className="text-xl font-bold text-gray-900 mb-5">Perfil</Text>
+
+        {/* Header com fundo azul */}
+        <View style={{
+          backgroundColor: '#0369A1',
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          paddingBottom: 56,
+          borderBottomLeftRadius: 32,
+          borderBottomRightRadius: 32,
+        }}>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: 'white', letterSpacing: -0.3, marginBottom: 24 }}>
+            Perfil
+          </Text>
 
           {isLoading ? (
-            <ActivityIndicator color="#0EA5E9" />
+            <ActivityIndicator color="white" />
           ) : (
-            <View className="flex-row items-center gap-4">
-              <View className="w-16 h-16 bg-primary-500 rounded-full items-center justify-center">
-                <Text className="text-white font-bold text-2xl">{initial}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              {/* Avatar */}
+              <View style={{
+                width: 64, height: 64, borderRadius: 32,
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.4)',
+              }}>
+                <Text style={{ color: 'white', fontSize: 26, fontWeight: '800' }}>{initial}</Text>
               </View>
-              <View className="flex-1">
-                <Text className="font-bold text-gray-900 text-lg">{userName}</Text>
-                <Text className="text-gray-500 text-sm">{userEmail}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: '700' }}>{userName}</Text>
+                <Text style={{ color: 'rgba(186,230,253,0.8)', fontSize: 13, marginTop: 2 }}>{userEmail}</Text>
                 {profile?.phone && (
-                  <Text className="text-gray-400 text-xs mt-0.5">{profile.phone}</Text>
+                  <Text style={{ color: 'rgba(186,230,253,0.6)', fontSize: 12, marginTop: 1 }}>
+                    {profile.phone}
+                  </Text>
                 )}
               </View>
-              <TouchableOpacity className="w-9 h-9 bg-gray-100 rounded-full items-center justify-center">
-                <Settings size={16} color="#6B7280" />
+              <TouchableOpacity style={{
+                width: 36, height: 36, borderRadius: 18,
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Settings size={16} color="white" />
               </TouchableOpacity>
             </View>
           )}
+        </View>
 
-          {/* Stats reais */}
-          <View className="flex-row bg-gray-50 rounded-2xl p-4 mt-5 justify-around">
-            <View className="items-center">
-              <Text className="font-bold text-gray-900 text-lg">{stats?.totalBookings ?? '–'}</Text>
-              <Text className="text-gray-400 text-xs mt-0.5">Lavagens</Text>
-            </View>
-            <View className="items-center border-l border-gray-200 pl-6">
-              <Text className="font-bold text-gray-900 text-lg">
-                {stats?.avgRating !== '0' ? stats?.avgRating : '–'}
-              </Text>
-              <Text className="text-gray-400 text-xs mt-0.5">Avaliação média</Text>
-            </View>
-            <View className="items-center border-l border-gray-200 pl-6">
-              <Text className="font-bold text-gray-900 text-lg">{stats?.memberSince ?? '–'}</Text>
-              <Text className="text-gray-400 text-xs mt-0.5">Desde</Text>
-            </View>
+        {/* Stats flutuantes */}
+        <View style={{ paddingHorizontal: 20, marginTop: -32 }}>
+          <View style={{
+            backgroundColor: 'white', borderRadius: 20,
+            padding: 20, flexDirection: 'row', justifyContent: 'space-around',
+            ...CARD_SHADOW,
+          }}>
+            {[
+              { icon: Calendar, value: stats?.totalBookings ?? '–', label: 'Lavagens', color: '#0EA5E9', bg: '#EFF6FF' },
+              { icon: Star, value: stats?.avgRating !== '0' ? stats?.avgRating : '–', label: 'Avaliação', color: '#F59E0B', bg: '#FFFBEB' },
+              { icon: Sparkles, value: stats?.memberSince ?? '–', label: 'Membro desde', color: '#8B5CF6', bg: '#F5F3FF' },
+            ].map((stat, i) => {
+              const Icon = stat.icon
+              return (
+                <View key={i} style={{ alignItems: 'center', flex: 1 }}>
+                  {i > 0 && (
+                    <View style={{
+                      position: 'absolute', left: 0, top: '10%', bottom: '10%',
+                      width: 1, backgroundColor: '#F3F4F6',
+                    }} />
+                  )}
+                  <View style={{
+                    width: 36, height: 36, borderRadius: 12,
+                    backgroundColor: stat.bg, alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 8,
+                  }}>
+                    <Icon size={16} color={stat.color} />
+                  </View>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: '#111827' }}>{stat.value}</Text>
+                  <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>{stat.label}</Text>
+                </View>
+              )
+            })}
           </View>
         </View>
 
         {/* Acesso rápido */}
-        <View className="px-5 mt-4">
-          <View className="flex-row gap-3">
+        <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity
-              className="flex-1 bg-primary-500 rounded-2xl p-4 items-center gap-1.5"
+              style={{
+                flex: 1, backgroundColor: '#0EA5E9', borderRadius: 20,
+                paddingVertical: 18, alignItems: 'center', gap: 8,
+                shadowColor: '#0EA5E9', shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25, shadowRadius: 12, elevation: 5,
+              }}
               onPress={() => router.push('/(client)/bookings')}
             >
               <Calendar size={22} color="white" />
-              <Text className="text-white font-semibold text-sm">Agendamentos</Text>
+              <Text style={{ color: 'white', fontWeight: '700', fontSize: 12 }}>Agendamentos</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="flex-1 bg-amber-50 rounded-2xl p-4 items-center gap-1.5">
-              <Star size={22} color="#F59E0B" />
-              <Text className="text-amber-700 font-semibold text-sm">Avaliações</Text>
-            </TouchableOpacity>
+
             <TouchableOpacity
-              className="flex-1 bg-gray-100 rounded-2xl p-4 items-center gap-1.5"
+              style={{
+                flex: 1, backgroundColor: '#FFFBEB', borderRadius: 20,
+                paddingVertical: 18, alignItems: 'center', gap: 8,
+                borderWidth: 1.5, borderColor: '#FDE68A',
+              }}
+            >
+              <Star size={22} color="#F59E0B" />
+              <Text style={{ color: '#B45309', fontWeight: '700', fontSize: 12 }}>Avaliações</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flex: 1, backgroundColor: '#F5F3FF', borderRadius: 20,
+                paddingVertical: 18, alignItems: 'center', gap: 8,
+                borderWidth: 1.5, borderColor: '#DDD6FE',
+              }}
               onPress={() => router.push('/(client)/vehicles')}
             >
-              <Car size={22} color="#6B7280" />
-              <Text className="text-gray-600 font-semibold text-sm">Veículos</Text>
+              <Car size={22} color="#8B5CF6" />
+              <Text style={{ color: '#6D28D9', fontWeight: '700', fontSize: 12 }}>Veículos</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Menu */}
         {MENU_SECTIONS.map(section => (
-          <View key={section.title} className="mt-5 px-5">
-            <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <View key={section.title} style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#9CA3AF', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 }}>
               {section.title}
             </Text>
-            <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <View style={{ backgroundColor: 'white', borderRadius: 20, overflow: 'hidden', ...CARD_SHADOW }}>
               {section.items.map((item, i) => {
                 const Icon = item.icon
                 return (
                   <TouchableOpacity
                     key={item.label}
                     onPress={item.onPress}
-                    className={`flex-row items-center gap-3 px-4 py-4 ${i > 0 ? 'border-t border-gray-50' : ''}`}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 14,
+                      paddingHorizontal: 16, paddingVertical: 16,
+                      borderTopWidth: i > 0 ? 1 : 0, borderTopColor: '#F9FAFB',
+                    }}
                     activeOpacity={0.7}
                   >
-                    <View className="w-9 h-9 bg-gray-100 rounded-xl items-center justify-center">
-                      <Icon size={17} color="#6B7280" />
+                    <View style={{
+                      width: 40, height: 40, borderRadius: 12,
+                      backgroundColor: item.bg,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon size={18} color={item.color} />
                     </View>
-                    <View className="flex-1">
-                      <Text className="font-medium text-gray-900 text-sm">{item.label}</Text>
-                      <Text className="text-gray-400 text-xs mt-0.5">{item.desc}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: '600', color: '#111827', fontSize: 14 }}>{item.label}</Text>
+                      <Text style={{ color: '#9CA3AF', fontSize: 12, marginTop: 2 }}>{item.desc}</Text>
                     </View>
                     <ChevronRight size={16} color="#D1D5DB" />
                   </TouchableOpacity>
@@ -150,13 +222,17 @@ export default function ProfileScreen() {
         ))}
 
         {/* Sair */}
-        <View className="px-5 mt-5 mb-8">
+        <View style={{ paddingHorizontal: 20, marginTop: 24, marginBottom: 40 }}>
           <TouchableOpacity
             onPress={handleSignOut}
-            className="bg-red-50 rounded-2xl py-4 flex-row items-center justify-center gap-2"
+            style={{
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+              gap: 8, backgroundColor: '#FEF2F2', borderRadius: 20, paddingVertical: 16,
+              borderWidth: 1.5, borderColor: '#FECACA',
+            }}
           >
             <LogOut size={18} color="#EF4444" />
-            <Text className="text-red-500 font-semibold">Sair da conta</Text>
+            <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 15 }}>Sair da conta</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
