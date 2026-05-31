@@ -1,14 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const searchParams = useSearchParams()
+  const accessDenied = searchParams.get('error') === 'acesso_negado'
+  const [error, setError] = useState(accessDenied ? 'Esta conta não tem acesso ao painel de parceiros.' : '')
   const router = useRouter()
   const supabase = createClient()
 

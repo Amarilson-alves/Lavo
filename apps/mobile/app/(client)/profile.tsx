@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, StatusBar } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, StatusBar, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useAuth } from '@/hooks/useAuth'
@@ -23,16 +23,19 @@ export default function ProfileScreen() {
   const initial = firstName.charAt(0).toUpperCase()
 
   async function handleSignOut() {
-    Alert.alert('Sair da conta', 'Deseja mesmo sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Sair', style: 'destructive',
-        onPress: async () => {
-          await signOut()
-          router.replace('/(auth)/welcome')
-        },
-      },
-    ])
+    const doSignOut = async () => {
+      await signOut()
+      router.replace('/(auth)/welcome')
+    }
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Deseja mesmo sair da conta?')) await doSignOut()
+    } else {
+      Alert.alert('Sair da conta', 'Deseja mesmo sair?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair', style: 'destructive', onPress: doSignOut },
+      ])
+    }
   }
 
   const MENU_SECTIONS = [

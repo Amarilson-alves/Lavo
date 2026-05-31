@@ -9,7 +9,7 @@ create extension if not exists pgcrypto;
 do $$
 declare
   -- Senha computada uma vez (bcrypt cost 6 = rápido para seed)
-  _pwd  text        := crypt('Lavo@2026', gen_salt('bf', 6));
+  _pwd  text        := crypt('Lavo@2026', gen_salt('bf', 10));
   _inst uuid        := '00000000-0000-0000-0000-000000000000';
   _app  jsonb       := '{"provider":"email","providers":["email"]}';
   _now  timestamptz := now();
@@ -53,29 +53,30 @@ begin
   insert into auth.users (
     id, instance_id, aud, role,
     email, encrypted_password, email_confirmed_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change_token_current, reauthentication_token,
     raw_app_meta_data, raw_user_meta_data,
-    created_at, updated_at, is_super_admin
+    created_at, updated_at
   ) values
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro01@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Lava Car Premium SP","full_name":"Lava Car Premium SP"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro02@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Auto Spa Elite RJ","full_name":"Auto Spa Elite RJ"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro03@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Clean Motors BH","full_name":"Clean Motors BH"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro04@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Brilho Total Curitiba","full_name":"Brilho Total Curitiba"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro05@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Lavagem Express POA","full_name":"Lavagem Express POA"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro06@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Auto Clean Master","full_name":"Auto Clean Master"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro07@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Detalhamento Pro BSB","full_name":"Detalhamento Pro BSB"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro08@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"EcoLavagem Salvador","full_name":"EcoLavagem Salvador"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro09@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Shine Car Fortaleza","full_name":"Shine Car Fortaleza"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro10@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"AutoSpa Premium Recife","full_name":"AutoSpa Premium Recife"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro11@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Car Detail Center ABC","full_name":"Car Detail Center ABC"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro12@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Lava Car Express Floripa","full_name":"Lava Car Express Floripa"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro13@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Auto Brilho Manaus","full_name":"Auto Brilho Manaus"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro14@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Prime Detail Goiânia","full_name":"Prime Detail Goiânia"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro15@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Lava & Brilha Belém","full_name":"Lava & Brilha Belém"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro16@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Auto Spa Niterói","full_name":"Auto Spa Niterói"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro17@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Premium Detail Santos","full_name":"Premium Detail Santos"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro18@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Car Wash Vitória","full_name":"Car Wash Vitória"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro19@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Lava Car Natal","full_name":"Lava Car Natal"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro20@lavo.test', _pwd, _now, _app, '{"role":"partner","business_name":"Clean Auto JP","full_name":"Clean Auto JP"}'::jsonb, _now, _now, false);
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro01@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Lava Car Premium SP","full_name":"Lava Car Premium SP"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro02@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Auto Spa Elite RJ","full_name":"Auto Spa Elite RJ"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro03@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Clean Motors BH","full_name":"Clean Motors BH"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro04@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Brilho Total Curitiba","full_name":"Brilho Total Curitiba"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro05@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Lavagem Express POA","full_name":"Lavagem Express POA"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro06@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Auto Clean Master","full_name":"Auto Clean Master"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro07@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Detalhamento Pro BSB","full_name":"Detalhamento Pro BSB"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro08@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"EcoLavagem Salvador","full_name":"EcoLavagem Salvador"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro09@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Shine Car Fortaleza","full_name":"Shine Car Fortaleza"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro10@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"AutoSpa Premium Recife","full_name":"AutoSpa Premium Recife"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro11@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Car Detail Center ABC","full_name":"Car Detail Center ABC"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro12@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Lava Car Express Floripa","full_name":"Lava Car Express Floripa"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro13@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Auto Brilho Manaus","full_name":"Auto Brilho Manaus"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro14@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Prime Detail Goiânia","full_name":"Prime Detail Goiânia"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro15@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Lava & Brilha Belém","full_name":"Lava & Brilha Belém"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro16@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Auto Spa Niterói","full_name":"Auto Spa Niterói"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro17@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Premium Detail Santos","full_name":"Premium Detail Santos"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro18@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Car Wash Vitória","full_name":"Car Wash Vitória"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro19@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Lava Car Natal","full_name":"Lava Car Natal"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'parceiro20@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"partner","business_name":"Clean Auto JP","full_name":"Clean Auto JP"}'::jsonb, _now, _now);
 
   -- ============================================================
   -- 2. CLIENTES — auth.users
@@ -83,17 +84,31 @@ begin
   insert into auth.users (
     id, instance_id, aud, role,
     email, encrypted_password, email_confirmed_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change_token_current, reauthentication_token,
     raw_app_meta_data, raw_user_meta_data,
-    created_at, updated_at, is_super_admin
+    created_at, updated_at
   ) values
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'joao@lavo.test',   _pwd, _now, _app, '{"role":"client","full_name":"João Silva"}'::jsonb,     _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'maria@lavo.test',  _pwd, _now, _app, '{"role":"client","full_name":"Maria Santos"}'::jsonb,   _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'pedro@lavo.test',  _pwd, _now, _app, '{"role":"client","full_name":"Pedro Oliveira"}'::jsonb, _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'ana@lavo.test',    _pwd, _now, _app, '{"role":"client","full_name":"Ana Costa"}'::jsonb,      _now, _now, false),
-    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'carlos@lavo.test', _pwd, _now, _app, '{"role":"client","full_name":"Carlos Lima"}'::jsonb,    _now, _now, false);
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'joao@lavo.test',   _pwd, _now, '', '', '', '', '', _app, '{"role":"client","full_name":"João Silva"}'::jsonb,     _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'maria@lavo.test',  _pwd, _now, '', '', '', '', '', _app, '{"role":"client","full_name":"Maria Santos"}'::jsonb,   _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'pedro@lavo.test',  _pwd, _now, '', '', '', '', '', _app, '{"role":"client","full_name":"Pedro Oliveira"}'::jsonb, _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'ana@lavo.test',    _pwd, _now, '', '', '', '', '', _app, '{"role":"client","full_name":"Ana Costa"}'::jsonb,      _now, _now),
+    (gen_random_uuid(), _inst, 'authenticated', 'authenticated', 'carlos@lavo.test', _pwd, _now, '', '', '', '', '', _app, '{"role":"client","full_name":"Carlos Lima"}'::jsonb,    _now, _now);
 
   -- ============================================================
-  -- 3. LOCALIZAÇÕES (trigger já criou partner_profiles)
+  -- 3. AUTH.IDENTITIES — obrigatório para login email/senha no GoTrue
+  -- ============================================================
+  insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+  select
+    u.email,
+    u.id,
+    json_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true, 'phone_verified', false)::jsonb,
+    'email',
+    _now, _now, _now
+  from auth.users u
+  where u.email like '%@lavo.test';
+
+  -- ============================================================
+  -- 5. LOCALIZAÇÕES (trigger já criou partner_profiles)
   --    Busca partner_id via JOIN com public.users pelo email
   -- ============================================================
 
@@ -178,7 +193,7 @@ begin
   from partner_profiles pp join public.users u on u.id = pp.user_id where u.email = 'parceiro20@lavo.test';
 
   -- ============================================================
-  -- 4. SERVIÇOS
+  -- 6. SERVIÇOS
   --    Variados por categoria e faixa de preço (Budget / Mid / Premium)
   -- ============================================================
 
@@ -289,7 +304,7 @@ begin
   where u.email in ('parceiro01@lavo.test','parceiro17@lavo.test');
 
   -- ============================================================
-  -- 5. ATIVA todos os parceiros e define ratings realistas
+  -- 7. ATIVA todos os parceiros e define ratings realistas
   -- ============================================================
   update partner_profiles pp
   set

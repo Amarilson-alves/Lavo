@@ -21,37 +21,39 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const { signUp } = useAuth()
 
   async function handleRegister() {
+    setErrorMsg('')
     if (!fullName || !email || !password) {
-      Alert.alert('Atenção', 'Preencha nome, e-mail e senha.')
+      setErrorMsg('Preencha nome, e-mail e senha.')
       return
     }
     if (password.length < 6) {
-      Alert.alert('Atenção', 'A senha deve ter no mínimo 6 caracteres.')
+      setErrorMsg('A senha deve ter no mínimo 6 caracteres.')
       return
     }
     if (isPartner && !businessName) {
-      Alert.alert('Atenção', 'Informe o nome do seu estabelecimento.')
+      setErrorMsg('Informe o nome do seu estabelecimento.')
       return
     }
     setLoading(true)
-    const { error } = await signUp(email, password, fullName, {
+    const { error } = await signUp(email.trim(), password, fullName.trim(), {
       role,
       phone,
-      business_name: isPartner ? businessName : undefined,
+      business_name: isPartner ? businessName.trim() : undefined,
     })
     setLoading(false)
     if (error) {
-      Alert.alert('Erro ao criar conta', error.message)
+      setErrorMsg(
+        error.message.includes('already registered')
+          ? 'Este e-mail já está cadastrado.'
+          : error.message
+      )
       return
     }
-    Alert.alert(
-      'Conta criada!',
-      'Verifique seu e-mail para confirmar o cadastro.',
-      [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
-    )
+    router.replace('/(client)/home')
   }
 
   return (
@@ -161,6 +163,17 @@ export default function RegisterScreen() {
                 secureTextEntry value={password} onChangeText={setPassword} />
             </View>
           </View>
+
+          {errorMsg ? (
+            <View style={{
+              backgroundColor: '#FEF2F2', borderRadius: 12,
+              padding: 14, marginTop: 16, borderWidth: 1, borderColor: '#FECACA',
+            }}>
+              <Text style={{ color: '#DC2626', fontSize: 13, fontWeight: '500', textAlign: 'center' }}>
+                {errorMsg}
+              </Text>
+            </View>
+          ) : null}
 
           <TouchableOpacity
             style={{

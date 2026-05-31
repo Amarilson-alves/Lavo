@@ -47,6 +47,40 @@ export default function SettingsPage() {
 
   const [hours, setHours] = useState<WorkingDay[]>(DEFAULT_HOURS)
   const [saving, setSaving] = useState(false)
+  const [cepLoading, setCepLoading] = useState(false)
+
+  async function handleCepBlur(cep: string) {
+    const digits = cep.replace(/\D/g, '')
+    if (digits.length !== 8) return
+    setCepLoading(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
+      const data = await res.json()
+      if (data.erro) { setCepLoading(false); return }
+
+      setLocationForm(f => ({
+        ...f,
+        address: data.logradouro || f.address,
+        neighborhood: data.bairro || f.neighborhood,
+        city: data.localidade || f.city,
+        state: data.uf || f.state,
+      }))
+
+      const query = encodeURIComponent(`${data.logradouro}, ${data.bairro}, ${data.localidade}, ${data.uf}, Brasil`)
+      const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`)
+      const geoData = await geo.json()
+      if (geoData[0]) {
+        setLocationForm(f => ({
+          ...f,
+          latitude: parseFloat(geoData[0].lat),
+          longitude: parseFloat(geoData[0].lon),
+        }))
+      }
+    } catch {
+    } finally {
+      setCepLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (partner) {
@@ -89,9 +123,14 @@ export default function SettingsPage() {
 
     setSaving(true)
     try {
-      await updateProfile.mutateAsync(profileForm)
+      const hasLocation = !!(locationForm.address && locationForm.city && locationForm.latitude && locationForm.longitude)
 
-      if (locationForm.address && locationForm.city) {
+      await updateProfile.mutateAsync({
+        ...profileForm,
+        ...(hasLocation ? { is_active: true } : {}),
+      })
+
+      if (hasLocation) {
         await saveLocation.mutateAsync({
           ...locationForm,
           working_hours: hours,
@@ -235,12 +274,16 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">CEP</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              CEP {cepLoading && <span className="text-primary-500 text-xs ml-1">buscando...</span>}
+            </label>
             <input
               value={locationForm.zip_code}
               onChange={e => setLocationForm(f => ({ ...f, zip_code: e.target.value }))}
+              onBlur={e => handleCepBlur(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="01310-100"
+              maxLength={9}
             />
           </div>
           <div>
@@ -262,32 +305,16 @@ export default function SettingsPage() {
               {STATES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Latitude</label>
-            <input
-              type="number"
-              step="any"
-              value={locationForm.latitude}
-              onChange={e => setLocationForm(f => ({ ...f, latitude: Number(e.target.value) }))}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="-23.5505"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Longitude</label>
-            <input
-              type="number"
-              step="any"
-              value={locationForm.longitude}
-              onChange={e => setLocationForm(f => ({ ...f, longitude: Number(e.target.value) }))}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="-46.6333"
-            />
-          </div>
           <div className="col-span-2">
-            <p className="text-xs text-gray-400 mt-1">
-              💡 Para encontrar latitude/longitude: abra o Google Maps, clique com botão direito no local e copie as coordenadas.
-            </p>
+            {locationForm.latitude && locationForm.longitude ? (
+              <p className="text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                📍 Coordenadas obtidas automaticamente: {locationForm.latitude.toFixed(5)}, {locationForm.longitude.toFixed(5)}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400 bg-gray-50 px-3 py-2 rounded-lg">
+                📍 Digite o CEP e saia do campo — endereço e coordenadas serão preenchidos automaticamente.
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -23,12 +23,14 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const role = user?.user_metadata?.role as string | undefined
 
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!user) return NextResponse.redirect(new URL('/login', request.url))
+    if (role !== 'partner') return NextResponse.redirect(new URL('/login?error=acesso_negado', request.url))
   }
 
-  if (user && ['/login', '/register'].includes(request.nextUrl.pathname)) {
+  if (user && role === 'partner' && ['/login', '/register'].includes(request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 10.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://tkpmnkdoqkodkajkpfuk.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrcG1ua2RvcWtvZGthamtwZnVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDg2NjksImV4cCI6MjA5NDYyNDY2OX0.eblslwkT8BmdxVAZ-bGnxvkMXLQ5mY7f4kU10OHkj7A",
+        "npm_config_node_linker": "hoisted",
+        "npm_config_shamefully_hoist": "true"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "distribution": "store"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

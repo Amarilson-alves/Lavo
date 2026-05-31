@@ -10,17 +10,27 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const { signIn } = useAuth()
 
   async function handleLogin() {
+    setErrorMsg('')
     if (!email || !password) {
-      Alert.alert('Atenção', 'Preencha e-mail e senha.')
+      setErrorMsg('Preencha e-mail e senha.')
       return
     }
     setLoading(true)
-    const { error } = await signIn(email, password)
+    const { error } = await signIn(email.trim(), password)
     setLoading(false)
-    if (error) Alert.alert('Erro ao entrar', error.message)
+    if (error) {
+      setErrorMsg(
+        error.message === 'Invalid login credentials'
+          ? 'E-mail ou senha incorretos.'
+          : error.message
+      )
+    } else {
+      router.replace('/(client)/home')
+    }
   }
 
   return (
@@ -112,6 +122,18 @@ export default function LoginScreen() {
               </View>
             </View>
           </View>
+
+          {/* Erro inline */}
+          {errorMsg ? (
+            <View style={{
+              backgroundColor: '#FEF2F2', borderRadius: 12,
+              padding: 14, marginTop: 16, borderWidth: 1, borderColor: '#FECACA',
+            }}>
+              <Text style={{ color: '#DC2626', fontSize: 13, fontWeight: '500', textAlign: 'center' }}>
+                {errorMsg}
+              </Text>
+            </View>
+          ) : null}
 
           {/* Login button */}
           <TouchableOpacity

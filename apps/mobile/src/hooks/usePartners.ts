@@ -1,6 +1,52 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@lavo/database'
 
+export type NearbyPartner = {
+  partner_id: string
+  business_name: string
+  rating: number
+  total_reviews: number
+  address: string
+  city: string
+  state: string
+  latitude: number
+  longitude: number
+  distance_km: number
+  services: Array<{
+    id: string
+    name: string
+    category: string
+    pricing: Array<{ vehicle_type: string; price: number }>
+  }>
+}
+
+export function useNearbyPartners(
+  coords: { latitude: number; longitude: number } | null,
+  radiusKm: number,
+  category?: string,
+) {
+  return useQuery({
+    queryKey: ['nearby-partners', coords?.latitude, coords?.longitude, radiusKm, category],
+    enabled: !!coords,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('search_nearby_partners', {
+        user_lat: coords!.latitude,
+        user_lng: coords!.longitude,
+        radius_km: radiusKm,
+        category: category || null,
+      })
+      if (error) throw error
+      return (data ?? []) as NearbyPartner[]
+    },
+  })
+}
+
+export function getNearbyMinPrice(services: NearbyPartner['services']): number | null {
+  if (!services.length) return null
+  const prices = services.flatMap(s => s.pricing.map(p => p.price))
+  return prices.length > 0 ? Math.min(...prices) : null
+}
+
 export type PartnerWithDetails = {
   id: string
   business_name: string
