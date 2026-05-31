@@ -55,7 +55,7 @@ export function useBookings() {
         `)
         .order('scheduled_at', { ascending: false })
       if (error) throw error
-      return (data ?? []) as BookingWithDetails[]
+      return (data ?? []) as unknown as BookingWithDetails[]
     },
     enabled: !!userId,
   })
