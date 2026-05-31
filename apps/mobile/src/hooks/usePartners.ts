@@ -58,6 +58,7 @@ export type PartnerWithDetails = {
   is_active: boolean
   partner_locations: {
     address: string
+    number?: string
     city: string
     state: string
     latitude: number
