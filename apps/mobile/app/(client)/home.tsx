@@ -1,6 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, StatusBar } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Search, MapPin, Star, Clock, ArrowRight } from 'lucide-react-native'
+import { Search, MapPin, Star, ArrowRight } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useAuth } from '@/hooks/useAuth'
 import { usePartners, isOpenNow, getMinPrice } from '@/hooks/usePartners'
