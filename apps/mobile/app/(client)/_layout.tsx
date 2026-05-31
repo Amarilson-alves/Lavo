@@ -1,6 +1,8 @@
-import { Tabs } from 'expo-router'
+import { useEffect } from 'react'
+import { Tabs, router } from 'expo-router'
 import { Home, Search, CalendarCheck, User } from 'lucide-react-native'
 import { View, Platform } from 'react-native'
+import { useAuth } from '@/hooks/useAuth'
 
 function TabIcon({ Icon, color, focused }: { Icon: any; color: string; focused: boolean }) {
   return (
@@ -20,6 +22,14 @@ function TabIcon({ Icon, color, focused }: { Icon: any; color: string; focused: 
 }
 
 export default function ClientLayout() {
+  const { session, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading && !session) {
+      router.replace('/(auth)/welcome')
+    }
+  }, [session, loading])
+
   return (
     <Tabs
       screenOptions={{
