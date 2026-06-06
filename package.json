@@ -13,7 +13,11 @@
     "db:types": "pnpm --filter @lavo/database generate"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["unrs-resolver", "esbuild", "sharp"],
+    "onlyBuiltDependencies": [
+      "unrs-resolver",
+      "esbuild",
+      "sharp"
+    ],
     "overrides": {
       "expo-linking": "~6.3.1",
       "expo-constants": "~16.0.2",
@@ -22,10 +26,11 @@
     }
   },
   "devDependencies": {
-    "turbo": "^2.0.0",
-    "typescript": "^5.4.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "jimp": "0.22.12",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
   }
 }
