@@ -59,6 +59,7 @@ lerna-debug.log*
 ehthumbs.db
 Thumbs.db
 Desktop.ini
+%ProgramData%
 
 # ============================================================
 # Editor / IDE
