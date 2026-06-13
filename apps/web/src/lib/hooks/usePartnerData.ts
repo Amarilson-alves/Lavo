@@ -41,6 +41,7 @@ export type Service = {
   description: string | null
   category: string
   duration_minutes: number
+  capacity: number
   is_active: boolean
   pricing: Array<{ vehicle_type: string; price: number }>
 }

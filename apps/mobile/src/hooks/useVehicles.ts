@@ -31,9 +31,12 @@ export function useVehicles() {
   const query = useQuery({
     queryKey: ['vehicles', userId],
     queryFn: async () => {
+      const clientId = await getClientProfileId(userId!)
+      if (!clientId) return []
       const { data, error } = await supabase
         .from('vehicles')
         .select('id, plate, brand, model, year, color, type')
+        .eq('client_id', clientId)
         .order('created_at', { ascending: true })
       if (error) throw error
       return (data ?? []) as Vehicle[]

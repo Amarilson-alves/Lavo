@@ -47,7 +47,7 @@ export default function BookingNewScreen() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
 
-  const { isSlotOccupied, isLoading: loadingAvailability } = usePartnerAvailability(partnerId, selectedDate)
+  const { getSlotInfo, isLoading: loadingAvailability } = usePartnerAvailability(partnerId, selectedDate, serviceId)
 
   const vehicle = vehicles.find(v => v.id === selectedVehicle)
   const price = vehicle && service
@@ -273,29 +273,42 @@ export default function BookingNewScreen() {
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                   {TIME_SLOTS.map(time => {
-                    const occupied = service ? isSlotOccupied(time, service.duration_minutes) : false
+                    const capacity = service?.capacity ?? 1
+                    const { full, remaining } = service
+                      ? getSlotInfo(time, service.duration_minutes, capacity)
+                      : { full: false, remaining: capacity }
                     const selected = selectedTime === time
+                    const lastSpot = !full && remaining === 1 && capacity > 1
                     return (
                       <TouchableOpacity
                         key={time}
-                        onPress={() => { if (!occupied) setSelectedTime(time) }}
-                        disabled={occupied || loadingAvailability}
+                        onPress={() => { if (!full) setSelectedTime(time) }}
+                        disabled={full || loadingAvailability}
                         style={{
                           paddingHorizontal: 18, paddingVertical: 12, borderRadius: 14,
-                          backgroundColor: occupied ? '#F3F4F6' : selected ? '#0EA5E9' : 'white',
+                          backgroundColor: full ? '#F3F4F6' : selected ? '#0EA5E9' : 'white',
                           opacity: loadingAvailability ? 0.5 : 1,
-                          ...(!occupied && !selected ? CARD_SHADOW : {}),
+                          ...(!full && !selected ? CARD_SHADOW : {}),
                         }}
                       >
                         <Text style={{
                           fontWeight: '700', fontSize: 14,
-                          color: occupied ? '#D1D5DB' : selected ? 'white' : '#374151',
-                          textDecorationLine: occupied ? 'line-through' : 'none',
+                          color: full ? '#D1D5DB' : selected ? 'white' : '#374151',
+                          textDecorationLine: full ? 'line-through' : 'none',
+                          textAlign: 'center',
                         }}>
                           {time}
                         </Text>
-                        {occupied && (
+                        {full && (
                           <Text style={{ fontSize: 9, color: '#D1D5DB', textAlign: 'center', marginTop: 2 }}>ocupado</Text>
+                        )}
+                        {!full && !selected && capacity > 1 && (
+                          <Text style={{
+                            fontSize: 9, textAlign: 'center', marginTop: 2, fontWeight: '600',
+                            color: lastSpot ? '#F59E0B' : '#10B981',
+                          }}>
+                            {lastSpot ? 'última vaga' : `${remaining} vagas`}
+                          </Text>
                         )}
                       </TouchableOpacity>
                     )
