@@ -16,29 +16,31 @@ config.resolver.nodeModulesPaths = [
 
 // ─── SINGLETON RESOLVER (pnpm Windows fix) ────────────────────────────────────
 //
-// pnpm cria múltiplos diretórios físicos no .pnpm para pacotes com peer deps
-// diferentes (ex: react@18.2.0 vs react@18.3.1). Metro carrega TODOS os
-// diretórios e trata cada caminho como módulo distinto → instâncias duplicadas
-// de react, react-native-screens, etc. → "View config getter undefined", hook
-// violations, etc.
+// pnpm cria DOIS diretórios físicos no .pnpm para cada pacote com peer deps
+// diferentes. Metro trata cada caminho como módulo distinto → instâncias
+// duplicadas de react, expo-router/Route.js, etc.
 //
-// Fix: interceptar require() por NOME de módulo e forçar UM único caminho
-// canônico. Cobrimos todos os pacotes duplicados detectados automaticamente.
+// Problema em duas camadas:
+// 1. Bare imports (require('expo-router')) → interceptado por SINGLETONS
+// 2. Subpath imports (require('expo-router/_ctx')) → resolvem para
+//    apps/mobile/node_modules/expo-router (junction .pnpm) em vez da cópia
+//    hoisted em node_modules/ → CurrentRouteContext diferente → "No filename found"
+//
+// Fix: interceptar tanto bare imports quanto subpath imports, redirecionando
+// todos para o diretório canônico (raiz do workspace).
 
-const realpathCache = new Map()
-function realpath(p) {
-  if (realpathCache.has(p)) return realpathCache.get(p)
-  try {
-    const r = fs.realpathSync.native(p)
-    realpathCache.set(p, r)
-    return r
-  } catch (_) {
-    realpathCache.set(p, p)
-    return p
+const EXTS = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js']
+
+function tryResolveFile(base, entry) {
+  for (const ext of EXTS) {
+    const p = path.resolve(base, entry + ext)
+    if (fs.existsSync(p) && fs.statSync(p).isFile()) return p
   }
+  return null
 }
 
-// Extrai o nome do pacote de uma entrada do .pnpm (ex: @scope+pkg@ver... → @scope/pkg)
+// Extrai o nome do pacote de uma entrada do .pnpm
+// @scope+pkg@ver... → @scope/pkg | pkg@ver... → pkg
 function extractPkgName(entry) {
   if (entry.startsWith('@')) {
     const plusIdx = entry.indexOf('+')
@@ -51,20 +53,22 @@ function extractPkgName(entry) {
   return atIdx > 0 ? entry.slice(0, atIdx) : null
 }
 
-// Resolve o entry point que o METRO usa (campo "react-native" > "main")
-// require.resolve usa "main" (CJS) – errado para Metro.
-// Alguns pacotes omitem extensão no campo react-native (ex: "src/index" em vez
-// de "src/index.ts") — testamos múltiplas extensões via tryResolveFile.
-const EXTS = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js']
-
-function tryResolveFile(base, entry) {
-  for (const ext of EXTS) {
-    const p = path.resolve(base, entry + ext)
-    if (fs.existsSync(p) && fs.statSync(p).isFile()) return p
+// Divide 'pkg/sub' ou '@scope/pkg/sub' em { pkgName, subpath }
+function splitModuleName(moduleName) {
+  if (moduleName.startsWith('@')) {
+    const first = moduleName.indexOf('/')
+    if (first < 0) return { pkgName: moduleName, subpath: null }
+    const second = moduleName.indexOf('/', first + 1)
+    if (second < 0) return { pkgName: moduleName, subpath: null }
+    return { pkgName: moduleName.slice(0, second), subpath: moduleName.slice(second + 1) }
   }
-  return null
+  const slash = moduleName.indexOf('/')
+  if (slash < 0) return { pkgName: moduleName, subpath: null }
+  return { pkgName: moduleName.slice(0, slash), subpath: moduleName.slice(slash + 1) }
 }
 
+// Resolve o entry point que o METRO usa (campo "react-native" > "main")
+// Retorna { file, dir } onde dir é o diretório raiz do pacote (contém package.json)
 function resolveMetroEntry(pkg) {
   const bases = [workspaceRoot, projectRoot].map(r => path.join(r, 'node_modules'))
 
@@ -72,10 +76,11 @@ function resolveMetroEntry(pkg) {
   for (const base of bases) {
     try {
       const pkgJsonPath = require.resolve(pkg + '/package.json', { paths: [base] })
+      const pkgDir = path.dirname(pkgJsonPath)
       const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'))
       const entry = pkgJson['react-native'] || pkgJson['main'] || 'index.js'
-      const resolved = tryResolveFile(path.dirname(pkgJsonPath), entry)
-      if (resolved) return resolved
+      const file = tryResolveFile(pkgDir, entry)
+      if (file) return { file, dir: pkgDir }
     } catch (_) {}
   }
   // Tentativa 2: leitura direta (pacotes com exports map que bloqueiam /package.json)
@@ -84,15 +89,14 @@ function resolveMetroEntry(pkg) {
       const pkgDir = path.join(base, pkg)
       const pkgJson = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'))
       const entry = pkgJson['react-native'] || pkgJson['main'] || 'index.js'
-      const resolved = tryResolveFile(pkgDir, entry)
-      if (resolved) return resolved
+      const file = tryResolveFile(pkgDir, entry)
+      if (file) return { file, dir: pkgDir }
     } catch (_) {}
   }
   return null
 }
 
 // Auto-detecta todos os pacotes duplicados no .pnpm e cria singletons
-// Cobre TODOS de uma vez em vez de adicionar um por um (whack-a-mole)
 function buildSingletons() {
   const pnpmDir = path.resolve(workspaceRoot, 'node_modules/.pnpm')
   const pkgCounts = new Map()
@@ -104,16 +108,19 @@ function buildSingletons() {
     }
   } catch (e) {
     console.warn('[metro] Falha ao ler .pnpm:', e.message)
-    return {}
+    return { singletons: {}, pkgDirs: {} }
   }
 
-  const singletons = {}
+  const singletons = {}  // pkg → canonical entry file path
+  const pkgDirs = {}     // pkg → canonical package root directory
   const skipped = []
+
   for (const [pkg, count] of pkgCounts) {
     if (count <= 1) continue
-    const resolved = resolveMetroEntry(pkg)
-    if (resolved) {
-      singletons[pkg] = resolved
+    const result = resolveMetroEntry(pkg)
+    if (result) {
+      singletons[pkg] = result.file
+      pkgDirs[pkg] = result.dir
     } else {
       skipped.push(pkg)
     }
@@ -128,14 +135,28 @@ function buildSingletons() {
       (skipped.length > 5 ? '... +' + (skipped.length - 5) : ''))
   }
 
-  return singletons
+  return { singletons, pkgDirs }
 }
 
-const SINGLETONS = buildSingletons()
+const { singletons: SINGLETONS, pkgDirs: PKG_DIRS } = buildSingletons()
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Bare import: require('expo-router') → canonical entry file
   const singleton = SINGLETONS[moduleName]
   if (singleton) return { filePath: singleton, type: 'sourceFile' }
+
+  // Subpath import: require('expo-router/_ctx') → canonical pkg dir + subpath
+  // Sem isso, apps/mobile/node_modules/expo-router (junction .pnpm) tem prioridade
+  // sobre node_modules/expo-router (cópia hoisted), gerando dois CurrentRouteContext
+  const { pkgName, subpath } = splitModuleName(moduleName)
+  if (subpath !== null) {
+    const pkgDir = PKG_DIRS[pkgName]
+    if (pkgDir) {
+      const resolved = tryResolveFile(pkgDir, subpath)
+      if (resolved) return { filePath: resolved, type: 'sourceFile' }
+    }
+  }
+
   return context.resolveRequest(context, moduleName, platform)
 }
 // ──────────────────────────────────────────────────────────────────────────────
