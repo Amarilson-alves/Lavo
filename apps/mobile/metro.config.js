@@ -70,7 +70,14 @@ function splitModuleName(moduleName) {
 // Resolve o entry point que o METRO usa (campo "react-native" > "main")
 // Retorna { file, dir } onde dir é o diretório raiz do pacote (contém package.json)
 function resolveMetroEntry(pkg) {
-  const bases = [workspaceRoot, projectRoot].map(r => path.join(r, 'node_modules'))
+  // projectRoot primeiro: babel-preset-expo (expo-router-plugin.js) usa
+  // resolve-from(projectRoot, 'expo-router/entry') para calcular EXPO_ROUTER_APP_ROOT
+  // como caminho RELATIVO a essa resolução. Se nosso singleton apontar para uma
+  // cópia física diferente (ex: hoisted na raiz), a matemática relativa do
+  // require.context() em _ctx.js quebra e nenhuma rota é encontrada (tela
+  // "Welcome to Expo"). Priorizar projectRoot mantém consistência com essa
+  // resolução Node.js feita fora do nosso resolver.
+  const bases = [projectRoot, workspaceRoot].map(r => path.join(r, 'node_modules'))
 
   // Tentativa 1: via require.resolve (respeita exports map)
   for (const base of bases) {
