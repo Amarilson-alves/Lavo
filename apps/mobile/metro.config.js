@@ -67,14 +67,16 @@ function resolveMetroEntry(pkg) {
   }
 }
 
-// Pacotes confirmados como DUPLICADOS no .pnpm (dois diretórios físicos distintos:
-// uma variante para react@18.2.0, outra para react@18.3.1).
-// Metro carrega AMBAS → dois IDs de módulo → efeitos:
-//   react           → ReactCurrentDispatcher nulo → "Invalid hook call"
+// Pacotes confirmados como DUPLICADOS no .pnpm (dois diretórios físicos distintos
+// por variações de peer dependencies). Metro carrega AMBAS → dois IDs de módulo.
+// Efeitos:
+//   react                → ReactCurrentDispatcher nulo → "Invalid hook call"
 //   @react-navigation/core → contextos de nav duplicados → "Couldn't register the navigator"
+//   react-native-svg     → RNSVGPath getter undefined → crash ao renderizar ícones
 const SINGLETONS = {
   'react': resolveSingletonPath('react'),
   '@react-navigation/core': resolveMetroEntry('@react-navigation/core'),
+  'react-native-svg': resolveMetroEntry('react-native-svg'),
 }
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
