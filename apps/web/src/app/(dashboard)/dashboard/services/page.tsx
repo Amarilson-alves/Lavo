@@ -37,6 +37,7 @@ const EMPTY_FORM: ServiceForm = {
   description: '',
   category: 'lavagem',
   duration_minutes: 60,
+  capacity: 1,
   is_active: true,
   pricing: [{ vehicle_type: 'hatch', price: 0 }],
 }
@@ -63,6 +64,7 @@ export default function ServicesPage() {
       description: service.description ?? '',
       category: service.category,
       duration_minutes: service.duration_minutes,
+      capacity: service.capacity ?? 1,
       is_active: service.is_active,
       pricing: service.pricing,
     })
@@ -181,9 +183,16 @@ export default function ServicesPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5 text-gray-500 shrink-0">
-                  <Clock size={14} />
-                  <span className="text-sm">{service.duration_minutes} min</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-1.5 text-gray-500">
+                    <Clock size={14} />
+                    <span className="text-sm">{service.duration_minutes} min</span>
+                  </div>
+                  {(service.capacity ?? 1) > 1 && (
+                    <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full">
+                      {service.capacity}x simultâneo
+                    </span>
+                  )}
                 </div>
 
                 {service.pricing.length > 0 && (
@@ -284,6 +293,35 @@ export default function ServicesPage() {
                     step={5}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Atendimentos simultâneos
+                </label>
+                <p className="text-xs text-gray-400 mb-2">
+                  Quantos clientes podem agendar este serviço ao mesmo tempo
+                </p>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, capacity: Math.max(1, (f.capacity ?? 1) - 1) }))}
+                    className="w-10 h-10 rounded-xl border border-gray-300 text-gray-600 font-bold text-lg hover:bg-gray-50 flex items-center justify-center"
+                  >
+                    −
+                  </button>
+                  <span className="w-12 text-center font-bold text-gray-900 text-lg">{form.capacity ?? 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, capacity: Math.min(20, (f.capacity ?? 1) + 1) }))}
+                    className="w-10 h-10 rounded-xl border border-gray-300 text-gray-600 font-bold text-lg hover:bg-gray-50 flex items-center justify-center"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm text-gray-500">
+                    {(form.capacity ?? 1) === 1 ? 'atendimento por vez' : 'atendimentos simultâneos'}
+                  </span>
                 </div>
               </div>
 

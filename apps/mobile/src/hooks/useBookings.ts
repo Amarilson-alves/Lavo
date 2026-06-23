@@ -121,3 +121,57 @@ export function useBookings() {
     rate,
   }
 }
+
+type BookedSlot = {
+  scheduled_at: string
+  services: { duration_minutes: number }
+}
+
+export function usePartnerAvailability(partnerId: string, date: Date | null, serviceId: string) {
+  const query = useQuery({
+    queryKey: ['partner-availability', partnerId, serviceId, date?.toDateString()],
+    queryFn: async (): Promise<BookedSlot[]> => {
+      const dayStart = new Date(date!)
+      dayStart.setHours(0, 0, 0, 0)
+      const dayEnd = new Date(date!)
+      dayEnd.setHours(23, 59, 59, 999)
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('scheduled_at, services(duration_minutes)')
+        .eq('partner_id', partnerId)
+        .eq('service_id', serviceId)
+        .not('status', 'in', '("cancelled","completed")')
+        .gte('scheduled_at', dayStart.toISOString())
+        .lte('scheduled_at', dayEnd.toISOString())
+
+      if (error) throw error
+      return (data ?? []) as unknown as BookedSlot[]
+    },
+    enabled: !!partnerId && !!date && !!serviceId,
+    staleTime: 30_000,
+  })
+
+  function getSlotInfo(
+    timeStr: string,
+    serviceDurationMinutes: number,
+    capacity: number,
+  ): { full: boolean; remaining: number } {
+    if (!date || !query.data) return { full: false, remaining: capacity }
+    const [h, m] = timeStr.split(':').map(Number)
+    const slotStart = new Date(date)
+    slotStart.setHours(h, m, 0, 0)
+    const slotEnd = new Date(slotStart.getTime() + serviceDurationMinutes * 60_000)
+
+    const overlapping = query.data.filter(b => {
+      const bookedStart = new Date(b.scheduled_at)
+      const bookedEnd = new Date(bookedStart.getTime() + b.services.duration_minutes * 60_000)
+      return slotStart < bookedEnd && slotEnd > bookedStart
+    }).length
+
+    const remaining = Math.max(0, capacity - overlapping)
+    return { full: remaining === 0, remaining }
+  }
+
+  return { getSlotInfo, isLoading: query.isLoading }
+}

@@ -3,6 +3,7 @@ import { Tabs, router } from 'expo-router'
 import { Home, Search, CalendarCheck, User } from 'lucide-react-native'
 import { View, Platform } from 'react-native'
 import { useAuth } from '@/hooks/useAuth'
+import { useNotifications } from '@/hooks/useNotifications'
 
 function TabIcon({ Icon, color, focused }: { Icon: any; color: string; focused: boolean }) {
   return (
@@ -23,6 +24,7 @@ function TabIcon({ Icon, color, focused }: { Icon: any; color: string; focused: 
 
 export default function ClientLayout() {
   const { session, loading } = useAuth()
+  useNotifications()
 
   useEffect(() => {
     if (!loading && !session) {

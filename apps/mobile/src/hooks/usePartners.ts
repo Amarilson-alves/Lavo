@@ -71,6 +71,7 @@ export type PartnerWithDetails = {
     description: string | null
     category: string
     duration_minutes: number
+    capacity: number
     pricing: Array<{ vehicle_type: string; price: number }>
     is_active: boolean
   }[]
@@ -86,7 +87,7 @@ export function usePartners(search?: string, category?: string) {
           id, business_name, description, logo_url, cover_url,
           rating, total_reviews, is_active,
           partner_locations ( address, city, state, latitude, longitude, working_hours ),
-          services ( id, name, description, category, duration_minutes, pricing, is_active )
+          services ( id, name, description, category, duration_minutes, capacity, pricing, is_active )
         `)
         .eq('is_active', true)
         .order('rating', { ascending: false })
@@ -121,7 +122,7 @@ export function usePartner(id: string) {
           id, business_name, description, logo_url, cover_url,
           rating, total_reviews, is_active,
           partner_locations ( address, city, state, latitude, longitude, working_hours ),
-          services ( id, name, description, category, duration_minutes, pricing, is_active )
+          services ( id, name, description, category, duration_minutes, capacity, pricing, is_active )
         `)
         .eq('id', id)
         .single()

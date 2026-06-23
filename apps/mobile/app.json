@@ -17,7 +17,6 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.lavo.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "O Lavô precisa da sua localização para encontrar lava cars próximos a você.",
         "NSCameraUsageDescription": "O Lavô precisa da câmera para você tirar foto do seu veículo.",
@@ -29,7 +28,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0EA5E9"
       },
-      "package": "com.lavo.app",
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "499370991978",
+    "project_id": "lavo-app-eaeee",
+    "storage_bucket": "lavo-app-eaeee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:499370991978:android:4be4cdc54d4005e9f48513",
+        "android_client_info": {
+          "package_name": "com.lavo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEA73o5KGN4NCJlxi33SyVhv_cgAVUz3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

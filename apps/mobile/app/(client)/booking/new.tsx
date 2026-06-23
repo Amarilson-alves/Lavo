@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { ArrowLeft, Car, Calendar, Check, ChevronRight, Plus } from 'lucide-react-native'
 import { usePartner } from '@/hooks/usePartners'
 import { useVehicles } from '@/hooks/useVehicles'
-import { useBookings } from '@/hooks/useBookings'
+import { useBookings, usePartnerAvailability } from '@/hooks/useBookings'
 
 const TIME_SLOTS = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 const PAYMENT_METHODS = [
@@ -47,6 +47,8 @@ export default function BookingNewScreen() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
 
+  const { getSlotInfo, isLoading: loadingAvailability } = usePartnerAvailability(partnerId, selectedDate, serviceId)
+
   const vehicle = vehicles.find(v => v.id === selectedVehicle)
   const price = vehicle && service
     ? (service.pricing.find(p => p.vehicle_type === vehicle.type)?.price ?? service.pricing[0]?.price ?? 0)
@@ -71,7 +73,18 @@ export default function BookingNewScreen() {
       scheduledAt: scheduled.toISOString(),
       price, paymentMethod: selectedPayment as 'pix' | 'credit_card' | 'debit_card',
     }).then(data => ({ data, error: null })).catch(err => ({ data: null, error: err }))
-    if (error) { Alert.alert('Erro', error.message ?? 'Não foi possível criar o agendamento.'); return }
+    if (error) {
+      const msg = error.message ?? ''
+      const isConflict = msg.includes('booking_conflict') || msg.includes('indisponível')
+      Alert.alert(
+        isConflict ? 'Horário indisponível' : 'Erro',
+        isConflict
+          ? 'Este horário foi reservado agora por outro cliente. Por favor, escolha outro horário.'
+          : (msg || 'Não foi possível criar o agendamento.'),
+      )
+      if (isConflict) setStep(1)
+      return
+    }
     router.replace('/(client)/booking/success')
   }
 
@@ -255,21 +268,51 @@ export default function BookingNewScreen() {
 
             {selectedDate && (
               <>
-                <Text style={{ fontWeight: '700', color: '#374151', fontSize: 14, marginTop: 4 }}>Horário disponível</Text>
+                <Text style={{ fontWeight: '700', color: '#374151', fontSize: 14, marginTop: 4 }}>
+                  {loadingAvailability ? 'Verificando disponibilidade...' : 'Horários disponíveis'}
+                </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                  {TIME_SLOTS.map(time => (
-                    <TouchableOpacity
-                      key={time}
-                      onPress={() => setSelectedTime(time)}
-                      style={{
-                        paddingHorizontal: 18, paddingVertical: 12, borderRadius: 14,
-                        backgroundColor: selectedTime === time ? '#0EA5E9' : 'white',
-                        ...CARD_SHADOW,
-                      }}
-                    >
-                      <Text style={{ fontWeight: '700', fontSize: 14, color: selectedTime === time ? 'white' : '#374151' }}>{time}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  {TIME_SLOTS.map(time => {
+                    const capacity = service?.capacity ?? 1
+                    const { full, remaining } = service
+                      ? getSlotInfo(time, service.duration_minutes, capacity)
+                      : { full: false, remaining: capacity }
+                    const selected = selectedTime === time
+                    const lastSpot = !full && remaining === 1 && capacity > 1
+                    return (
+                      <TouchableOpacity
+                        key={time}
+                        onPress={() => { if (!full) setSelectedTime(time) }}
+                        disabled={full || loadingAvailability}
+                        style={{
+                          paddingHorizontal: 18, paddingVertical: 12, borderRadius: 14,
+                          backgroundColor: full ? '#F3F4F6' : selected ? '#0EA5E9' : 'white',
+                          opacity: loadingAvailability ? 0.5 : 1,
+                          ...(!full && !selected ? CARD_SHADOW : {}),
+                        }}
+                      >
+                        <Text style={{
+                          fontWeight: '700', fontSize: 14,
+                          color: full ? '#D1D5DB' : selected ? 'white' : '#374151',
+                          textDecorationLine: full ? 'line-through' : 'none',
+                          textAlign: 'center',
+                        }}>
+                          {time}
+                        </Text>
+                        {full && (
+                          <Text style={{ fontSize: 9, color: '#D1D5DB', textAlign: 'center', marginTop: 2 }}>ocupado</Text>
+                        )}
+                        {!full && !selected && capacity > 1 && (
+                          <Text style={{
+                            fontSize: 9, textAlign: 'center', marginTop: 2, fontWeight: '600',
+                            color: lastSpot ? '#F59E0B' : '#10B981',
+                          }}>
+                            {lastSpot ? 'última vaga' : `${remaining} vagas`}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    )
+                  })}
                 </View>
               </>
             )}
