@@ -14,6 +14,7 @@ export interface Service {
   description: string | null
   category: ServiceCategory
   duration_minutes: number
+  capacity: number
   is_active: boolean
   pricing: ServicePricing[]
   created_at: string
