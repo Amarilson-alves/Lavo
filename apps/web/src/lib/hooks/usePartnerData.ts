@@ -165,7 +165,12 @@ export function usePartnerServices(partnerId: string | undefined) {
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase().from('services').delete().eq('id', id)
-      if (error) throw error
+      if (error) {
+        if (error.code === '23503') {
+          throw new Error('Este serviço tem agendamentos vinculados e não pode ser excluído. Desative-o usando o botão de toggle.')
+        }
+        throw error
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['partner-services', partnerId] }),
   })
