@@ -218,7 +218,15 @@ export function usePartnerBookings(partnerId: string | undefined) {
         .from('bookings')
         .update({ status })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        console.error('[updateStatus] Supabase error:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        })
+        throw new Error(error.message ?? 'Erro ao atualizar status')
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['partner-bookings', partnerId] }),
   })
